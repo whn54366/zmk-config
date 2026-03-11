@@ -1,0 +1,108 @@
+// 导入ZMK核心功能（固定写法，不用改）
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/battery.h>
+#include <dt-bindings/zmk/display.h>
+
+/ {
+  // ===================== 1. 按键映射核心（重点改这里） =====================
+  keymap {
+    compatible = "zmk,keymap";
+
+    // 层0：默认层（格斗键盘核心按键，双模式共用）
+    default_layer {
+      // 绑定格式：&kp 按键功能  // 备注：引脚对应（按你的实际接线改！）
+      bindings = <
+        // 【方向键区】
+        &kp UP        // P0.6  → 上方向键
+        &kp DOWN      // P0.7  → 下方向键
+        &kp LEFT      // P0.8  → 左方向键
+        &kp RIGHT     // P0.9  → 右方向键
+        
+        // 【攻击键区】（按你的格斗键盘布局改）
+        &kp A         // P0.0  → A键（轻拳）
+        &kp B         // P0.1  → B键（轻脚）
+        &kp X         // P0.4  → X键（重拳）
+        &kp Y         // P0.5  → Y键（重脚）
+        &kp LSHIFT    // P0.10 → 左Shift（闪避）
+        &kp SPACE     // P0.11 → 空格（大招）
+        &kp ENTER     // P0.12 → 回车（确认）
+        
+        // 【模式切换键】（可选：一键切换有线/蓝牙，不用拔线）
+        &bt BT_TOGGLE // P0.13 → 蓝牙开关（按一下切蓝牙/关闭蓝牙）
+        
+        // 补充你所有按键：格式是 &kp 按键码  // P0.xx（排除2、3、31，17/20给OLED）
+      >;
+    };
+
+    // 层1：功能层（长按某键切换，比如长按LSHIFT+按键）
+    // 可选：用来放音量、亮度等辅助功能，格斗键盘可注释
+    // func_layer {
+    //   bindings = <
+    //     &kp VOLU      // 音量+
+    //     &kp VOLD      // 音量-
+    //     &kp BT_CLR    // 清除蓝牙配对
+    //   >;
+    // };
+  };
+
+  // ===================== 2. OLED屏幕配置（双模式显示状态，不用改） =====================
+  &i2c0 {
+    status = "okay";
+    // OLED引脚：SDA=17（P0.17）、SCL=20（P0.20）（和你硬件一致）
+    sda-pin = <17>;
+    scl-pin = <20>;
+    sda-pullup = "pullup";
+    scl-pullup = "pullup";
+
+    // OLED屏幕驱动（0.96寸128x64，I2C地址）
+    oled@3c {
+      compatible = "ssd1306,ssd1306-128x64";
+      reg = <0x3c>;  // 屏幕不亮就改成0x3d
+      status = "okay";
+
+      // OLED显示内容（双模式状态+电量+按键提示）
+      display-labels {
+        compatible = "zmk,display-labels";
+        // 第一行：显示键盘名称
+        label-0 {
+          position = <0 0>;
+          text = "WHN Fight KB";
+        };
+        // 第二行：显示当前连接模式（USB/BLE）
+        label-1 {
+          position = <0 10>;
+          text = "Mode: %{CONN_TYPE}"; // 自动显示USB/BLE
+        };
+        // 第三行：蓝牙状态（仅无线时显示）
+        label-2 {
+          position = <0 20>;
+          text = "BLE: %{BLE_STATE}"; // 显示Connected/Disconnected
+        };
+        // 第四行：电池电量（无线模式显示）
+        label-3 {
+          position = <0 30>;
+          text = "Batt: %{BATTERY_PCT}%"; // 显示电量百分比
+        };
+        // 第五行：当前按下的按键（调试用）
+        label-4 {
+          position = <0 40>;
+          text = "Key: %{KEYS_PRESSED}";
+        };
+      };
+    };
+  };
+
+  // ===================== 3. 双模式优化（禁用无用外设，释放资源） =====================
+  &uart0 { status = "disabled"; };  // 禁用串口（格斗键盘不用）
+  &spi0 { status = "disabled"; };   // 禁用SPI（OLED用I2C，不用SPI）
+  &adc { status = "okay"; };        // 开启ADC（检测电池电量，无线模式必需）
+
+  // ===================== 4. 蓝牙优化（双模式核心） =====================
+  bluetooth {
+    compatible = "zmk,bluetooth";
+    status = "okay";
+    bdaddr = "random";  // 随机蓝牙地址（避免冲突）
+    name = "WHN_Fight_Keyboard"; // 和.conf文件里的蓝牙名一致
+  };
+};
