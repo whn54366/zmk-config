@@ -1,18 +1,13 @@
-# This file is a simple starter workflow that builds your ZMK firmware using the ZMK user config workflow.
 name: Build ZMK firmware
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   build:
     uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@v0.3
     with:
-      # Add your board/shield combinations here, e.g.:
-      # - board: nice_nano_v2
-      #   shield: corne_left
-      # - board: nice_nano_v2
-      #   shield: corne_right
       matrix: |
         - board: nice_nano_v2
           shield: nice_nano
