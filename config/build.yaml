@@ -1,4 +1,4 @@
-name: Build ZMK firmware
+name: Build ZMK Firmware
 
 on:
   push:
@@ -11,4 +11,4 @@ jobs:
       matrix:
         include:
           - board: nice_nano_v2
-            shield: nice_nano
+            shield: wwn_fight_keyboard
